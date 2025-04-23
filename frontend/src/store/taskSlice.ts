@@ -30,7 +30,7 @@ export const fetchTaskById = createAsyncThunk(
 
 export const addNewTask = createAsyncThunk(
   'tasks/addNewTask',
-  async (task: Partial<Task>) => {
+  async (task: Omit<Task, "id" | "createdAt">) => {
     return await TasksApi.create(task);
   }
 );

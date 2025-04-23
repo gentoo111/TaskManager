@@ -89,3 +89,4 @@ TestResults/
 *.bak
 *.swp
 *~
+/frontend/package-lock.json
