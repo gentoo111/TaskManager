@@ -36,8 +36,12 @@ namespace TaskManager.Infrastructure.Repositories
 
         public async Task UpdateTaskAsync(TaskItem task)
         {
-            _context.Tasks.Update(task);
-            await _context.SaveChangesAsync();
+            var existingTask = await _context.Tasks.FindAsync(task.Id);
+            if (existingTask != null)
+            {
+                _context.Entry(existingTask).CurrentValues.SetValues(task);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task DeleteTaskAsync(int id)
