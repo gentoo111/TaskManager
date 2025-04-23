@@ -8,9 +8,11 @@ import Link from 'next/link';
 
 // Simple priority display component
 const PriorityBadge = ({ priority }: { priority?: number }) => {
-  if (priority === 2) {
+  const priorityValue = Number(priority);
+
+  if (priorityValue === 2) {
     return <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">High</span>;
-  } else if (priority === 1) {
+  } else if (priorityValue === 1) {
     return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">Medium</span>;
   } else {
     return <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">Low</span>;
