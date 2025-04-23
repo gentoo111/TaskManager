@@ -9,6 +9,11 @@
         public DateTime? DueDate { get; set; }
         public bool IsCompleted { get; set; } = false;
         public int? Priority { get; set; }
-        public string? UserId { get; set; }
+        
+        // Add these properties
+        public string UserId { get; set; } = string.Empty;
+        
+        // Navigation property
+        public virtual UserEntity? User { get; set; }
     }
 }

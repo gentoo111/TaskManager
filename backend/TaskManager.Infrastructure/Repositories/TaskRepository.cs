@@ -16,6 +16,12 @@ namespace TaskManager.Infrastructure.Repositories
 
         public async Task<IEnumerable<TaskItem>> GetAllTasksAsync(string userId)
         {
+            if (userId == null)
+            {
+                // For debugging only - return all tasks
+                return await _context.Tasks.ToListAsync();
+            }
+    
             return await _context.Tasks
                 .Where(t => t.UserId == userId)
                 .OrderByDescending(t => t.CreatedAt)
