@@ -1,7 +1,7 @@
 ﻿// src/services/api.ts
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5201/api'; // 替换为你的 API 端口
+const API_URL = 'http://localhost:5201/api';
 
 export const apiClient = axios.create({
   baseURL: API_URL,

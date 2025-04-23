@@ -21,7 +21,7 @@ export default function EditTaskPage() {
         const taskData = await TasksApi.getById(Number(id));
         setTask(taskData);
       } catch (err) {
-        setError('加载任务数据失败');
+        setError('Loading task data failed.');
         console.error(err);
       } finally {
         setLoading(false);
@@ -42,13 +42,13 @@ export default function EditTaskPage() {
     await dispatch(updateTask(updatedTask as Task)).unwrap();
   };
 
-  if (loading) return <div className="p-6">加载中...</div>;
+  if (loading) return <div className="p-6">Loading...</div>;
   if (error) return <div className="p-6 text-red-500">{error}</div>;
-  if (!task) return <div className="p-6">找不到任务</div>;
+  if (!task) return <div className="p-6">Can't find tasks</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">编辑任务</h1>
+      <h1 className="text-2xl font-bold mb-6">Edit task</h1>
       <TaskForm task={task} onSubmit={handleSubmit} />
     </div>
   );

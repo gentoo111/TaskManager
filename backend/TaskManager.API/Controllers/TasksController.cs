@@ -1,4 +1,4 @@
-﻿// 更新 TasksController.cs 文件
+﻿// Updated TasksController.cs file
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -25,15 +25,15 @@ namespace TaskManager.API.Controllers
         {
             try
             {
-                // 简化版：在实际项目中，应从认证令牌获取用户ID
+                // Simplified: In a real project, get user ID from authentication token
                 string userId = "test-user";
                 var tasks = await _taskRepository.GetAllTasksAsync(userId);
                 return Ok(tasks);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "获取所有任务时出错");
-                return StatusCode(500, "获取任务列表时发生内部错误");
+                _logger.LogError(ex, "Error occurred while fetching all tasks");
+                return StatusCode(500, "Internal error occurred while fetching the task list");
             }
         }
 
@@ -44,14 +44,14 @@ namespace TaskManager.API.Controllers
             {
                 var task = await _taskRepository.GetTaskByIdAsync(id);
                 if (task == null)
-                    return NotFound($"ID为{id}的任务不存在");
+                    return NotFound($"Task with ID {id} not found");
 
                 return Ok(task);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "获取任务 {TaskId} 时出错", id);
-                return StatusCode(500, "获取任务时发生内部错误");
+                _logger.LogError(ex, "Error occurred while fetching task {TaskId}", id);
+                return StatusCode(500, "Internal error occurred while fetching the task");
             }
         }
 
@@ -61,13 +61,13 @@ namespace TaskManager.API.Controllers
             try
             {
                 if (task == null)
-                    return BadRequest("任务数据不能为空");
+                    return BadRequest("Task data cannot be null");
 
                 if (string.IsNullOrEmpty(task.Title))
-                    return BadRequest("任务标题不能为空");
+                    return BadRequest("Task title cannot be empty");
 
-                // 设置基本属性
-                task.UserId = "test-user"; // 简化版
+                // Set base properties
+                task.UserId = "test-user"; // Simplified
                 task.CreatedAt = DateTime.UtcNow;
 
                 await _taskRepository.AddTaskAsync(task);
@@ -75,8 +75,8 @@ namespace TaskManager.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "创建任务时出错");
-                return StatusCode(500, "创建任务时发生内部错误");
+                _logger.LogError(ex, "Error occurred while creating task");
+                return StatusCode(500, "Internal error occurred while creating the task");
             }
         }
 
@@ -86,17 +86,17 @@ namespace TaskManager.API.Controllers
             try
             {
                 if (id != task.Id)
-                    return BadRequest("路径ID与任务ID不匹配");
+                    return BadRequest("Path ID does not match task ID");
 
                 var existingTask = await _taskRepository.GetTaskByIdAsync(id);
                 if (existingTask == null)
-                    return NotFound($"ID为{id}的任务不存在");
+                    return NotFound($"Task with ID {id} not found");
 
-                // 简单的授权检查
+                // Simple authorization check
                 if (existingTask.UserId != "test-user")
                     return Forbid();
 
-                // 保留原始创建时间
+                // Retain original creation time
                 task.CreatedAt = existingTask.CreatedAt;
                 task.UserId = existingTask.UserId;
 
@@ -105,8 +105,8 @@ namespace TaskManager.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "更新任务 {TaskId} 时出错", id);
-                return StatusCode(500, "更新任务时发生内部错误");
+                _logger.LogError(ex, "Error occurred while updating task {TaskId}", id);
+                return StatusCode(500, "Internal error occurred while updating the task");
             }
         }
 
@@ -117,9 +117,9 @@ namespace TaskManager.API.Controllers
             {
                 var task = await _taskRepository.GetTaskByIdAsync(id);
                 if (task == null)
-                    return NotFound($"ID为{id}的任务不存在");
+                    return NotFound($"Task with ID {id} not found");
 
-                // 简单的授权检查
+                // Simple authorization check
                 if (task.UserId != "test-user")
                     return Forbid();
 
@@ -128,8 +128,8 @@ namespace TaskManager.API.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "删除任务 {TaskId} 时出错", id);
-                return StatusCode(500, "删除任务时发生内部错误");
+                _logger.LogError(ex, "Error occurred while deleting task {TaskId}", id);
+                return StatusCode(500, "Internal error occurred while deleting the task");
             }
         }
     }

@@ -6,14 +6,14 @@ import { AppDispatch, RootState } from '@/store';
 import { fetchTasks, deleteTask } from '@/store/taskSlice';
 import Link from 'next/link';
 
-// 简单的优先级显示组件
+// Simple priority display component
 const PriorityBadge = ({ priority }: { priority?: number }) => {
   if (priority === 2) {
-    return <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">高</span>;
+    return <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">High</span>;
   } else if (priority === 1) {
-    return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">中</span>;
+    return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">Medium</span>;
   } else {
-    return <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">低</span>;
+    return <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">Low</span>;
   }
 };
 
@@ -32,27 +32,27 @@ export default function TasksPage() {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!confirm('确定要删除这个任务吗？')) return;
+    if (!confirm('Are you sure you want to delete this task?')) return;
 
     setDeleteId(id);
     try {
       await dispatch(deleteTask(id)).unwrap();
     } catch (err) {
-      console.error('删除任务失败', err);
+      console.error('Failed to delete task', err);
     } finally {
       setDeleteId(null);
     }
   };
 
-  // 渲染内容
+  // Render content
   let content;
   if (status === 'loading') {
-    content = <div className="text-center py-10">加载中...</div>;
+    content = <div className="text-center py-10">Loading...</div>;
   } else if (status === 'succeeded') {
     if (tasks.length === 0) {
       content = (
         <div className="text-center py-10 text-gray-500">
-          还没有任务，点击"创建任务"按钮开始添加
+          No tasks yet, click "Create Task" to get started.
         </div>
       );
     } else {
@@ -66,36 +66,36 @@ export default function TasksPage() {
               </div>
 
               <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                {task.description || '无描述'}
+                {task.description || 'No description'}
               </p>
 
               <div className="flex justify-between items-center mt-4">
-        <span className={`px-2 py-1 rounded text-xs ${
-          task.isCompleted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-        }`}>
-          {task.isCompleted ? '已完成' : '未完成'}
-        </span>
+                <span className={`px-2 py-1 rounded text-xs ${
+                  task.isCompleted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {task.isCompleted ? 'Completed' : 'Incomplete'}
+                </span>
 
                 <div className="flex space-x-2">
-                  {/* 分离出查看按钮 */}
+                  {/* View button */}
                   <Link
                     href={`/tasks/${task.id}`}
                     className="text-gray-500 hover:text-gray-700 text-sm"
                   >
-                    查看
+                    View
                   </Link>
                   <Link
                     href={`/tasks/${task.id}/edit`}
                     className="text-blue-500 hover:text-blue-700 text-sm"
                   >
-                    编辑
+                    Edit
                   </Link>
                   <button
                     onClick={(e) => handleDelete(task.id, e)}
                     disabled={deleteId === task.id}
                     className="text-red-500 hover:text-red-700 text-sm disabled:text-gray-400"
                   >
-                    {deleteId === task.id ? '删除中...' : '删除'}
+                    {deleteId === task.id ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>
@@ -105,18 +105,18 @@ export default function TasksPage() {
       );
     }
   } else if (status === 'failed') {
-    content = <div className="text-center py-10 text-red-500">错误: {error}</div>;
+    content = <div className="text-center py-10 text-red-500">Error: {error}</div>;
   }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">我的任务</h1>
+        <h1 className="text-2xl font-bold">My Tasks</h1>
         <Link
           href="/tasks/new"
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
         >
-          创建任务
+          Create Task
         </Link>
       </div>
       {content}

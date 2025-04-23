@@ -5,32 +5,32 @@ using TaskManager.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 添加服务到容器
+// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 添加数据库上下文
+// Add database context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 添加 CORS
+// Add CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder
-            .WithOrigins("http://localhost:3000") // 前端地址
+            .WithOrigins("http://localhost:3000") // frontend URL
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials());
 });
 
-// 添加依赖注入
+// add repositories
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 
 var app = builder.Build();
 
-// 配置 HTTP 请求管道
+// set Initialize database
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

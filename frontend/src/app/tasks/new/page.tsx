@@ -15,7 +15,7 @@ export default function NewTaskPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">创建新任务</h1>
+      <h1 className="text-2xl font-bold mb-6">Create New Task</h1>
       <TaskForm onSubmit={handleSubmit} />
     </div>
   );

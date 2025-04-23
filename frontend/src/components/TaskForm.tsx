@@ -21,7 +21,7 @@ export default function TaskForm({ task, onSubmit }: TaskFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 如果是编辑模式，加载现有任务数据
+  // If in edit mode, load existing task data
   useEffect(() => {
     if (task) {
       setFormData({
@@ -54,7 +54,7 @@ export default function TaskForm({ task, onSubmit }: TaskFormProps) {
       await onSubmit(formData);
       router.push('/tasks');
     } catch (err) {
-      setError('提交失败，请重试');
+      setError('Submission failed, please try again');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -66,7 +66,7 @@ export default function TaskForm({ task, onSubmit }: TaskFormProps) {
       {error && <div className="bg-red-100 p-3 text-red-700 rounded">{error}</div>}
 
       <div>
-        <label htmlFor="title" className="block text-sm font-medium mb-1">标题 *</label>
+        <label htmlFor="title" className="block text-sm font-medium mb-1">Title *</label>
         <input
           id="title"
           name="title"
@@ -79,7 +79,7 @@ export default function TaskForm({ task, onSubmit }: TaskFormProps) {
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium mb-1">描述</label>
+        <label htmlFor="description" className="block text-sm font-medium mb-1">Description</label>
         <textarea
           id="description"
           name="description"
@@ -91,7 +91,7 @@ export default function TaskForm({ task, onSubmit }: TaskFormProps) {
       </div>
 
       <div>
-        <label htmlFor="dueDate" className="block text-sm font-medium mb-1">截止日期</label>
+        <label htmlFor="dueDate" className="block text-sm font-medium mb-1">Due Date</label>
         <input
           id="dueDate"
           name="dueDate"
@@ -103,7 +103,7 @@ export default function TaskForm({ task, onSubmit }: TaskFormProps) {
       </div>
 
       <div>
-        <label htmlFor="priority" className="block text-sm font-medium mb-1">优先级</label>
+        <label htmlFor="priority" className="block text-sm font-medium mb-1">Priority</label>
         <select
           id="priority"
           name="priority"
@@ -111,9 +111,9 @@ export default function TaskForm({ task, onSubmit }: TaskFormProps) {
           onChange={handleChange}
           className="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
         >
-          <option value={0}>低</option>
-          <option value={1}>中</option>
-          <option value={2}>高</option>
+          <option value={0}>Low</option>
+          <option value={1}>Medium</option>
+          <option value={2}>High</option>
         </select>
       </div>
 
@@ -126,7 +126,7 @@ export default function TaskForm({ task, onSubmit }: TaskFormProps) {
           onChange={handleChange}
           className="h-4 w-4 text-blue-600 rounded"
         />
-        <label htmlFor="isCompleted" className="ml-2 text-sm">已完成</label>
+        <label htmlFor="isCompleted" className="ml-2 text-sm">Completed</label>
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">
@@ -135,14 +135,14 @@ export default function TaskForm({ task, onSubmit }: TaskFormProps) {
           onClick={() => router.back()}
           className="px-4 py-2 border rounded text-gray-700"
         >
-          取消
+          Cancel
         </button>
         <button
           type="submit"
           disabled={isLoading}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-blue-300"
         >
-          {isLoading ? '提交中...' : (task ? '更新' : '创建')}
+          {isLoading ? 'Submitting...' : (task ? 'Update' : 'Create')}
         </button>
       </div>
     </form>
