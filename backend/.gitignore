@@ -1,0 +1,16 @@
+﻿# .NET Core 构建结果
+bin/
+obj/
+
+# Visual Studio 文件
+.vs/
+*.user
+*.suo
+*.vscode
+
+# 本地数据库
+*.mdf
+*.ldf
+
+# 本地配置
+appsettings.Development.json

@@ -1,0 +1,91 @@
+﻿# .NET Core 相关
+bin/
+obj/
+*.user
+*.suo
+*.dll
+*.exe
+*.pdb
+*.cache
+
+# Visual Studio / JetBrains Rider 相关
+.vs/
+.idea/
+*.sln.iml
+.vscode/
+*.userprefs
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# 数据库相关
+*.mdf
+*.ldf
+*.ndf
+*.sqlite
+*.db
+
+# 本地配置和敏感信息
+appsettings.Development.json
+appsettings.Local.json
+*.Development.json
+*.Local.json
+*.pfx
+*.publishsettings
+*.pubxml
+
+# EF Core迁移日志
+Migrations/*.txt
+
+# Node.js 相关
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnp/
+.pnp.js
+.npm
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Next.js 特定
+.next/
+out/
+build/
+dist/
+.vercel
+next-env.d.ts
+
+# 前端构建缓存
+.sass-cache/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+
+# 操作系统相关
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志文件
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 测试覆盖率报告
+coverage/
+.nyc_output/
+TestResults/
+[Tt]est[Rr]esult*/
+
+# 可能会生成的临时文件
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
