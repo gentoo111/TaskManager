@@ -1,9 +1,24 @@
-﻿"use client";
+﻿// src/providers.tsx
+"use client";
 
 import { Provider } from 'react-redux';
 import { store } from '@/store';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
+import { configureCognito } from '@/services/cognito';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { checkAuthStatus } from '@/store/authSlice';
 
 export function Providers({ children }: { children: ReactNode }) {
-  return <Provider store={store}>{children}</Provider>;
+  useEffect(() => {
+    // init Cognito
+    configureCognito();
+
+    store.dispatch(checkAuthStatus());
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <Provider store={store}>{children}</Provider>
+    </ErrorBoundary>
+  );
 }

@@ -150,5 +150,10 @@ namespace TaskManager.Infrastructure.Services
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
+        
+        public async Task SyncLocalUserAsync(string cognitoUserId, string email, string username)
+        {
+            await Task.CompletedTask;
+        }
     }
 }

@@ -20,7 +20,7 @@ namespace TaskManager.API.Controllers
         public TasksController(
             ITaskRepository taskRepository, 
             IAuthService authService,
-            ILogger<TasksController> logger)
+            ILogger<TasksController> logger) : base(logger)
         {
             _taskRepository = taskRepository;
             _authService = authService;
@@ -91,16 +91,40 @@ namespace TaskManager.API.Controllers
                     return BadRequest("Task title cannot be empty");
 
                 // Set user ID
-                task.UserId = GetUserId();
-                task.CreatedAt = DateTime.UtcNow;
+                string userId = GetUserId();
+                _logger.LogInformation("Creating task with UserId: {UserId}", task.UserId);
+                
+                var user = await _authService.GetUserByIdAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User not found in database: {UserId}", userId);
+                    return BadRequest("User not found. Please logout and login again.");
+                }
 
+                task.UserId = userId;
+                
+                task.CreatedAt = DateTime.UtcNow;
+                
+                if (task.DueDate.HasValue)
+                {
+                    task.DueDate = DateTime.SpecifyKind(task.DueDate.Value, DateTimeKind.Utc);
+                }
+
+                _logger.LogInformation("Task details: {Task}", 
+                    new { task.Title, task.Description, task.DueDate, task.Priority });
                 await _taskRepository.AddTaskAsync(task);
                 return CreatedAtAction(nameof(GetTask), new { id = task.Id }, task);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating task");
-                return StatusCode(500, "An error occurred while creating the task");
+                _logger.LogError(ex, "详细错误信息: 创建任务失败 - {Message}", ex.Message);
+        
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError("内部异常: {InnerMessage}", ex.InnerException.Message);
+                }
+        
+                return StatusCode(500, $"创建任务失败: {ex.Message}");
             }
         }
 
@@ -124,6 +148,11 @@ namespace TaskManager.API.Controllers
                 // Preserve original creation time and user ID
                 task.CreatedAt = existingTask.CreatedAt;
                 task.UserId = userId;
+                
+                if (task.DueDate.HasValue)
+                {
+                    task.DueDate = DateTime.SpecifyKind(task.DueDate.Value, DateTimeKind.Utc);
+                }
 
                 await _taskRepository.UpdateTaskAsync(task);
                 return NoContent();

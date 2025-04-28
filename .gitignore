@@ -90,3 +90,9 @@ TestResults/
 *.swp
 *~
 /frontend/package-lock.json
+/backend/backup_migrations/ApplicationDbContextModelSnapshot.cs
+/backend/TaskManager.Infrastructure/Migrations/20250423085150_AddUserAuthentication.Designer.cs
+/backend/TaskManager.Infrastructure/Migrations/20250423085150_AddUserAuthentication.cs
+/backend/backup_migrations/20250423024340_InitialCreate.Designer.cs
+/backend/backup_migrations/20250423024340_InitialCreate.cs
+/backend/backup_migrations/

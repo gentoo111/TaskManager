@@ -1,0 +1,260 @@
+﻿AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Task Manager Application - Full-stack deployment
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: Deployment environment
+  
+  DatabaseUsername:
+    Type: String
+    Default: postgres
+    Description: PostgreSQL database username
+  
+  DatabasePassword:
+    Type: String
+    NoEcho: true
+    Description: PostgreSQL database password
+  
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    Description: Secret key for JWT token validation
+  
+  AdminEmail:
+    Type: String
+    Description: Admin user's email address
+
+Resources:
+  # Cognito User Pool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub TaskManager-UserPool-${Environment}
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: true
+      EmailConfiguration:
+        EmailSendingAccount: COGNITO_DEFAULT
+  
+  # Cognito App Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub TaskManager-App-${Environment}
+      UserPoolId: !Ref UserPool
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+        - ALLOW_USER_SRP_AUTH
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+  
+  # Aurora Serverless v2 Database
+  AuroraServerlessCluster:
+    Type: AWS::RDS::DBCluster
+    DeletionPolicy: Snapshot
+    Properties:
+      Engine: aurora-postgresql
+      EngineVersion: 14.5
+      DatabaseName: TaskManagerDb
+      MasterUsername: !Ref DatabaseUsername
+      MasterUserPassword: !Ref DatabasePassword
+      DBClusterIdentifier: !Sub TaskManager-${Environment}-cluster
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: 0.5  # Minimum ACU
+        MaxCapacity: 1.0  # Maximum ACU (cost saving for demo)
+      EnableHttpEndpoint: true  # Use Data API
+  
+  # Database Instance
+  AuroraInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref AuroraServerlessCluster
+      DBInstanceClass: db.serverless
+      Engine: aurora-postgresql
+      EngineVersion: 14.5
+      PubliclyAccessible: false
+  
+  # Security group for database
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow access to Aurora Serverless
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0  # For demo. In production, restrict this!
+  
+  # Lambda Function
+  TaskManagerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub TaskManager-${Environment}
+      Handler: TaskManager.API::TaskManager.API.LambdaEntryPoint::FunctionHandlerAsync
+      Runtime: dotnet6
+      MemorySize: 1024
+      Timeout: 30
+      Environment:
+        Variables:
+          ASPNETCORE_ENVIRONMENT: Production
+          ConnectionStrings__DefaultConnection: !Sub 'Host=${AuroraServerlessCluster.Endpoint};Database=TaskManagerDb;Username=${DatabaseUsername};Password=${DatabasePassword}'
+          JWT__Secret: !Ref JwtSecret
+          JWT__ValidIssuer: TaskManager
+          JWT__ValidAudience: TaskManagerUsers
+          AWS__Region: !Ref AWS::Region
+          AWS__UserPoolId: !Ref UserPool
+          AWS__UserPoolClientId: !Ref UserPoolClient
+      Policies:
+        - AmazonCognitoPowerUser
+        - AmazonRDSDataFullAccess
+        - Statement:
+            - Effect: Allow
+              Action:
+                - 'rds-data:ExecuteStatement'
+                - 'rds-data:BatchExecuteStatement'
+              Resource: '*'
+      Events:
+        ApiRoot:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+  
+  # S3 Bucket for Frontend
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub taskmanager-frontend-${Environment}-${AWS::AccountId}
+      AccessControl: Private
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - HEAD
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3000
+  
+  # Bucket Policy
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub arn:aws:s3:::${WebsiteBucket}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}
+  
+  # CloudFront Distribution
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt WebsiteBucket.RegionalDomainName
+            Id: S3Origin
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        DefaultRootObject: index.html
+        Enabled: true
+        DefaultCacheBehavior:
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # CachingOptimized policy
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+  
+  # Origin Access Control for CloudFront
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: TaskManagerOAC
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+  
+  CloudFrontDomain:
+    Description: CloudFront distribution domain name
+    Value: !GetAtt CloudFrontDistribution.DomainName
+  
+  CloudFrontDistributionId:
+    Description: CloudFront distribution ID
+    Value: !Ref CloudFrontDistribution
+  
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref UserPool
+  
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref UserPoolClient
+  
+  WebsiteBucketName:
+    Description: S3 bucket name for website
+    Value: !Ref WebsiteBucket
+  
+  LambdaFunctionName:
+    Description: Lambda function name
+    Value: !Ref TaskManagerFunction
+  
+  AuroraClusterEndpoint:
+    Description: Aurora Serverless cluster endpoint
+    Value: !GetAtt AuroraServerlessCluster.Endpoint

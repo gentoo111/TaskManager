@@ -1,0 +1,161 @@
+﻿name: Deploy Task Manager to AWS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 允许手动触发
+
+env:
+  AWS_REGION: ap-southeast-2  # 悉尼区域
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # 设置 .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+      
+      # 后端测试
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal --configuration Release
+      
+      # 前端构建
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend  # 调整为实际的前端目录
+          npm ci
+      
+      # 替换前端环境变量
+      - name: Create frontend environment file
+        if: github.event_name == 'push'
+        run: |
+          cd frontend  # 调整为实际的前端目录
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.API_ENDPOINT }}" > .env.production.local
+          echo "NEXT_PUBLIC_AWS_REGION=${{ env.AWS_REGION }}" >> .env.production.local
+          echo "NEXT_PUBLIC_USER_POOL_ID=${{ secrets.USER_POOL_ID }}" >> .env.production.local
+          echo "NEXT_PUBLIC_USER_POOL_CLIENT_ID=${{ secrets.USER_POOL_CLIENT_ID }}" >> .env.production.local
+
+      - name: Build frontend
+        run: |
+          cd frontend  # 调整为实际的前端目录
+          npm run build
+      
+      # 保存构建产物
+      - name: Upload backend build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-build
+          path: |
+            */bin/Release/net9.0/
+            */publish/
+            serverless.template
+
+      - name: Upload frontend build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend/out  # 如果是导出的静态站点
+
+  deploy:
+    needs: test-and-build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # 设置 AWS 凭证
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      # 下载构建产物
+      - name: Download backend build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-build
+
+      - name: Download frontend build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: frontend-build
+      
+      # 首次部署或更新 CloudFormation 堆栈
+      - name: Deploy CloudFormation stack
+        run: |
+          aws cloudformation deploy \
+            --template-file cloudformation.yaml \
+            --stack-name TaskManager-Stack \
+            --parameter-overrides \
+              Environment=dev \
+              DatabaseUsername=${{ secrets.DB_USERNAME }} \
+              DatabasePassword=${{ secrets.DB_PASSWORD }} \
+              JwtSecret=${{ secrets.JWT_SECRET }} \
+              AdminEmail=${{ secrets.ADMIN_EMAIL }} \
+            --capabilities CAPABILITY_IAM
+      
+      # 获取堆栈输出
+      - name: Get CloudFormation outputs
+        id: cf-outputs
+        run: |
+          # 获取 S3 桶名和 Lambda 函数名
+          S3_BUCKET=$(aws cloudformation describe-stacks --stack-name TaskManager-Stack --query "Stacks[0].Outputs[?OutputKey=='WebsiteBucketName'].OutputValue" --output text)
+          echo "S3_BUCKET=$S3_BUCKET" >> $GITHUB_ENV
+          
+          FUNCTION_NAME=$(aws cloudformation describe-stacks --stack-name TaskManager-Stack --query "Stacks[0].Outputs[?OutputKey=='LambdaFunctionName'].OutputValue" --output text)
+          echo "FUNCTION_NAME=$FUNCTION_NAME" >> $GITHUB_ENV
+      
+      # 部署 Lambda 函数
+      - name: Package and deploy Lambda
+        run: |
+          # 打包 Lambda 代码
+          cd TaskManager.API/bin/Release/net9.0/
+          zip -r ../../../../lambda-package.zip *
+          
+          # 更新 Lambda 函数代码
+          aws lambda update-function-code \
+            --function-name ${{ env.FUNCTION_NAME }} \
+            --zip-file fileb://../../../../lambda-package.zip
+      
+      # 部署前端到 S3
+      - name: Deploy frontend to S3
+        run: |
+          aws s3 sync frontend-build s3://${{ env.S3_BUCKET }} --delete
+      
+      # 创建 CloudFront 缓存失效
+      - name: Create CloudFront invalidation
+        run: |
+          CLOUDFRONT_ID=$(aws cloudformation describe-stacks --stack-name TaskManager-Stack --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
+          
+          aws cloudfront create-invalidation \
+            --distribution-id $CLOUDFRONT_ID \
+            --paths "/*"
+      
+      # 部署完成通知
+      - name: Deployment summary
+        run: |
+          echo "Deployment completed successfully!"
+          echo "API Endpoint: $(aws cloudformation describe-stacks --stack-name TaskManager-Stack --query "Stacks[0].Outputs[?OutputKey=='ApiEndpoint'].OutputValue" --output text)"
+          echo "Frontend URL: $(aws cloudformation describe-stacks --stack-name TaskManager-Stack --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDomain'].OutputValue" --output text)"
+          echo "User Pool ID: $(aws cloudformation describe-stacks --stack-name TaskManager-Stack --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" --output text)"

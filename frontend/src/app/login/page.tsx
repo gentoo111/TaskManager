@@ -16,6 +16,14 @@ export default function LoginPage() {
   const router = useRouter();
   const { status, error } = useSelector((state: RootState) => state.auth);
 
+  useEffect(() => {
+    const rememberedUser = localStorage.getItem('rememberedUser');
+    if (rememberedUser) {
+      setEmail(rememberedUser);
+      setRememberMe(true);
+    }
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {

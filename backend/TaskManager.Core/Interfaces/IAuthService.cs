@@ -11,5 +11,6 @@ namespace TaskManager.Core.Interfaces
         Task<AuthResponse> LoginAsync(LoginDto loginDto);
         Task<UserEntity> GetUserByIdAsync(string userId);
         Task<bool> VerifyUserOwnershipAsync(string userId, int taskId);
+        Task SyncLocalUserAsync(string cognitoUserId, string email, string username);
     }
 }

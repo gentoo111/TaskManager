@@ -2,7 +2,7 @@
 "use client";
 import {useEffect, useState} from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import {usePathname, useRouter} from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store';
 import { logout } from '@/store/authSlice';
@@ -12,6 +12,7 @@ export default function Header() {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [isClient, setIsClient] = useState(false);
   useEffect(() => {
@@ -21,6 +22,11 @@ export default function Header() {
   const handleLogout = async () => {
     await dispatch(logout());
     router.push('/login');
+  };
+
+  // Function to check if a path is active
+  const isActive = (path: string) => {
+    return pathname === path;
   };
 
   return (
@@ -38,7 +44,11 @@ export default function Header() {
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <Link
                   href="/tasks"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+                    isActive('/tasks')
+                      ? 'border-blue-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
                 >
                   My Tasks
                 </Link>
@@ -64,13 +74,21 @@ export default function Header() {
                 <div className="flex space-x-4">
                   <Link
                     href="/login"
-                    className="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className={`rounded-md px-3 py-2 text-sm font-medium ${
+                      isActive('/login')
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
                   >
                     Sign in
                   </Link>
                   <Link
                     href="/register"
-                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-500"
+                    className={`rounded-md px-3 py-2 text-sm font-medium ${
+                      isActive('/register')
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
                   >
                     Sign up
                   </Link>
@@ -108,7 +126,11 @@ export default function Header() {
             {isAuthenticated && (
               <Link
                 href="/tasks"
-                className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${
+                  isActive('/tasks')
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                }`}
               >
                 My Tasks
               </Link>
@@ -131,13 +153,21 @@ export default function Header() {
               <div className="space-y-1">
                 <Link
                   href="/login"
-                  className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                  className={`block px-4 py-2 text-base font-medium ${
+                    isActive('/login')
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+                  }`}
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/register"
-                  className="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+                  className={`block px-4 py-2 text-base font-medium ${
+                    isActive('/register')
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+                  }`}
                 >
                   Sign up
                 </Link>

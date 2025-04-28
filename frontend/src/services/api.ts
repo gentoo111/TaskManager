@@ -1,7 +1,9 @@
 ﻿// src/services/api.ts
 import axios from 'axios';
+import { Auth } from 'aws-amplify';
 
-const API_URL = 'http://localhost:5201/api';
+// API URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5201/api';
 
 export interface Task {
   id: number;
@@ -13,40 +15,6 @@ export interface Task {
   priority?: number;
 }
 
-export interface RegisterDto {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
-export interface LoginDto {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
-
-export interface AuthResponse {
-  successful: boolean;
-  token: string;
-  userId: string;
-  username: string;
-  message: string;
-}
-
-export const AuthApi = {
-  register: async (registerData: RegisterDto): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/register', registerData);
-    return response.data;
-  },
-
-  login: async (loginData: LoginDto): Promise<AuthResponse> => {
-    const response = await apiClient.post('/auth/login', loginData);
-    return response.data;
-  }
-};
-
-// Update apiClient to include JWT token
 export const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
@@ -54,14 +22,16 @@ export const apiClient = axios.create({
   },
 });
 
-// Make sure your interceptor is correctly attaching the token
+// 使用 Amplify Auth 拦截器自动获取最新的 token
 apiClient.interceptors.request.use(
-  (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) {
-        // Make sure to include the 'Bearer' prefix and a space
+  async (config) => {
+    if (typeof window !== 'undefined') { 
+      try {
+        const session = await Auth.currentSession();
+        const token = session.getIdToken().getJwtToken();
         config.headers.Authorization = `Bearer ${token}`;
+      } catch (error) {
+        console.log("No active session, proceeding without token");
       }
     }
     return config;
@@ -81,8 +51,15 @@ export const TasksApi = {
   },
 
   create: async (task: Omit<Task, 'id' | 'createdAt'>): Promise<Task> => {
-    const response = await apiClient.post('/tasks', task);
-    return response.data;
+    console.log("Creating task with data:", task);
+    try {
+      const response = await apiClient.post('/tasks', task);
+      return response.data;
+    } catch (error) {
+      console.error("Task creation error:", error);
+      console.error("Error response:", error.response?.data);
+      throw error;
+    }
   },
 
   update: async (task: Task): Promise<void> => {

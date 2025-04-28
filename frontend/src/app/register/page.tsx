@@ -26,7 +26,7 @@ export default function RegisterPage() {
         password,
         confirmPassword
       })).unwrap();
-      router.push('/tasks');
+      router.push('/verify');
     } catch (err) {
       console.error('Registration failed:', err);
     }

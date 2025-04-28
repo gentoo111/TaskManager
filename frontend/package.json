@@ -12,11 +12,14 @@
     "@headlessui/react": "^2.2.2",
     "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.7.0",
-    "axios": "^1.8.4",
+    "aws-amplify": "^5.3.11",
+    "axios": "^1.9.0",
     "next": "15.3.1",
+    "oidc-client-ts": "^3.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.1",
+    "react-oidc-context": "^3.3.0",
     "react-redux": "^9.2.0"
   },
   "devDependencies": {
