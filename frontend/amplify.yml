@@ -1,0 +1,24 @@
+﻿version: 1
+applications:
+  - appRoot: frontend
+    backend:
+      phases:
+        build:
+          commands: []
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      buildPath: /
+      cache:
+        paths:
+          - node_modules/**/*
+    framework: nextjs
