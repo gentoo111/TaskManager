@@ -118,6 +118,7 @@ Resources:
       Runtime: dotnet6
       MemorySize: 1024
       Timeout: 30
+      CodeUri: ./backend/TaskManager.API/bin/Release/net9.0/publish/
       Environment:
         Variables:
           ASPNETCORE_ENVIRONMENT: Production
