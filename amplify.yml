@@ -14,5 +14,5 @@ applications:
         files:
           - '**/*'
       buildPath: /frontend
-    appRoot: /
+    appRoot: frontend
     framework: nextjs
