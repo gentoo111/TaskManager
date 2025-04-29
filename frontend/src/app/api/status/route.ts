@@ -1,9 +1,14 @@
-﻿export async function GET() {
-  return new Response(JSON.stringify({
-    status: 'ok',
-    time: new Date().toISOString(),
-    environment: process.env.NODE_ENV
-  }), {
-    headers: { 'content-type': 'application/json' }
-  });
+﻿export function GET() {
+  return new Response(
+    JSON.stringify({
+      message: 'This is a server-side rendered API route',
+      timestamp: new Date().toISOString(),
+      serverInfo: process.version
+    }),
+    {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
 }
