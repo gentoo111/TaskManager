@@ -106,6 +106,7 @@ export const logout = createAsyncThunk(
     await signOut();
     // Remove auth header
     delete apiClient.defaults.headers.common['Authorization'];
+    dispatch(clearTasks());
     return null;
   }
 );

@@ -58,6 +58,12 @@ const taskSlice = createSlice({
     resetTaskStatus: (state) => {
       state.status = 'idle';
       state.error = null;
+    },
+    // Add this new reducer
+    clearTasks: (state) => {
+      state.tasks = [];
+      state.status = 'idle';
+      state.error = null;
     }
   },
   extraReducers(builder) {
@@ -95,5 +101,5 @@ const taskSlice = createSlice({
   }
 });
 
-export const { resetTaskStatus } = taskSlice.actions;
+export const { resetTaskStatus, clearTasks } = taskSlice.actions;
 export default taskSlice.reducer;

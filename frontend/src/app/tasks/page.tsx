@@ -24,11 +24,11 @@ export default function TasksPage() {
   const {tasks, status, error} = useSelector((state: RootState) => state.tasks);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  
   useEffect(() => {
-    if (status === 'idle') {
-      dispatch(fetchTasks());
-    }
-  }, [status, dispatch]);
+    dispatch(fetchTasks());
+  }, [dispatch, isAuthenticated]);
 
   const handleDelete = async (id: number, e: React.MouseEvent) => {
     e.preventDefault();

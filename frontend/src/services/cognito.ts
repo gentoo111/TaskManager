@@ -36,24 +36,49 @@ export const configureCognito = () => {
 // Register new user through backend API
 export const registerUser = async (username: string, email: string, password: string) => {
   try {
-    // Call backend API for registration
-    const response = await apiClient.post('/auth/register', {
-      username,
-      email,
+    console.log("Starting direct Cognito registration process...");
+
+    // Clear any previous registration data
+    localStorage.removeItem('last_registered_username');
+    localStorage.removeItem('last_registered_email');
+
+    // Direct registration with Cognito (similar to how login works)
+    const result = await Auth.signUp({
+      username: username,
       password,
-      confirmPassword: password // Assuming frontend validates this before calling
+      attributes: {
+        email,
+        name: username
+      }
     });
 
     // Store user info for verification
-    localStorage.setItem('last_registered_username', username);
+    localStorage.setItem('last_registered_username', username); // Important: store email as username for Cognito
     localStorage.setItem('last_registered_email', email);
 
-    return response.data;
+    // After successful Cognito registration, sync user with backend database
+    try {
+      await apiClient.post('/auth/syncUser', {
+        userId: result.userSub,
+        email: email,
+        username: username
+      });
+      console.log("User data synced with backend database");
+    } catch (syncError) {
+      console.warn("User registered in Cognito but failed to sync with backend:", syncError);
+      // We don't fail the registration if sync fails, as the user can still verify and login
+    }
+
+    return {
+      successful: true,
+      userId: result.userSub,
+      message: "Registration successful. Please check your email for verification code."
+    };
   } catch (error) {
     console.error('Error signing up:', error);
     return {
       successful: false,
-      message: error.response?.data?.message || 'An error occurred during registration'
+      message: error.message || 'An error occurred during registration'
     };
   }
 };
@@ -93,7 +118,7 @@ export const signIn = async (usernameOrEmail: string, password: string, remember
 
     const user = await Auth.signIn(usernameOrEmail, password);
     console.log("Sign-in API call successful, checking user status:", user.challengeName || "No challenge");
-
+    
     // Handle NEW_PASSWORD_REQUIRED challenge automatically
     if (user.challengeName === 'NEW_PASSWORD_REQUIRED') {
       console.log("NEW_PASSWORD_REQUIRED challenge detected, auto-completing");

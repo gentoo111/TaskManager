@@ -58,6 +58,37 @@ namespace TaskManager.API.Controllers
             }
         }
 
+		[HttpPost("syncUser")]
+		[AllowAnonymous]
+		public async Task<ActionResult<AuthResponse>> SyncUser([FromBody] SyncUserDto syncUserDto)
+		{
+   		 try
+   		 {
+       		 _logger.LogInformation("User sync request received for userId: {UserId}, email: {Email}, username: {Username}", 
+         		   syncUserDto.UserId, syncUserDto.Email, syncUserDto.Username);
+        
+       		 // Sync user information with local database
+       		 await _authService.SyncLocalUserAsync(
+        		    syncUserDto.UserId, 
+       		     syncUserDto.Email,
+      		      syncUserDto.Username
+      		  );
+        
+        	return Ok(new AuthResponse { 
+       		     Successful = true, 
+        		    Message = "User synchronized with local database." 
+        		});
+    		}
+    		catch (Exception ex)
+   		 {
+      		  _logger.LogError(ex, "Error during user sync for: {Username}", syncUserDto.Username);
+     		   return StatusCode(500, new AuthResponse { 
+    		        Successful = false, 
+   		         Message = "User sync failed due to an error" 
+  		      });
+   		 }
+		}
+
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<ActionResult<AuthResponse>> Login(LoginDto loginDto)
@@ -88,17 +119,8 @@ namespace TaskManager.API.Controllers
             }
         }
 
-        [HttpPost("verify")]
-        public ActionResult<AuthResponse> VerifyAccount([FromBody] VerifyAccountDto verifyDto)
-        {
-            _logger.LogInformation("Verification request received for username: {Username}", verifyDto.Username);
-            
-            // This endpoint exists to provide a hook for frontend verification
-            // The actual verification is handled by Cognito
-            return Ok(new AuthResponse { 
-                Successful = true, 
-                Message = "Verification endpoint ready. Actual verification handled by Cognito client SDK." 
-            });
-        }
+     
+
+		
     }
 }
