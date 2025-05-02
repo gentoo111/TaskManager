@@ -17,24 +17,24 @@ namespace TaskManager.API.Controllers
         protected string GetUserId()
         {
             var claims = User.Claims.ToList();
-            _logger.LogInformation("所有声明: {@Claims}", claims.Select(c => new { c.Type, c.Value }));
+
+            // ✅ 强制打印所有 claims
+            foreach (var c in claims)
+            {
+                _logger.LogInformation("Claim - Type: {Type}, Value: {Value}", c.Type, c.Value);
+            }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             _logger.LogInformation("通过 NameIdentifier 找到的 UserId: {UserId}", userId);
 
-            if (string.IsNullOrEmpty(userId))
-            {
-                userId = User.Claims.FirstOrDefault(c => c.Type == "nameid")?.Value;
-                _logger.LogInformation("通过 nameid 找到的 UserId: {UserId}", userId);
-            }
+            userId ??= User.FindFirstValue("nameid");
+            _logger.LogInformation("通过 nameid 找到的 UserId: {UserId}", userId);
 
-            if (string.IsNullOrEmpty(userId))
-            {
-                userId = User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
-                _logger.LogInformation("通过 sub 找到的 UserId: {UserId}", userId);
-            }
+            userId ??= User.FindFirstValue("sub");
+            _logger.LogInformation("通过 sub 找到的 UserId: {UserId}", userId);
 
             return userId;
         }
+
     }
 }

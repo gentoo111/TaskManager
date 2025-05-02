@@ -1,14 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // 忽略TypeScript错误以允许生产构建完成
+  output: 'export',
   typescript: {
     ignoreBuildErrors: true,
   },
-  // 忽略ESLint错误以允许生产构建完成
   eslint: {
     ignoreDuringBuilds: true,
-  }
+  },
+  images: {
+    unoptimized: true,
+  },
+  trailingSlash: true,
 };
 
 module.exports = nextConfig;

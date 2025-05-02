@@ -12,6 +12,7 @@ namespace TaskManager.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -27,6 +28,7 @@ namespace TaskManager.API.Controllers
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<ActionResult<AuthResponse>> Register(RegisterDto registerDto)
         {
             try
@@ -57,6 +59,7 @@ namespace TaskManager.API.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<ActionResult<AuthResponse>> Login(LoginDto loginDto)
         {
             try

@@ -5,6 +5,9 @@ import { Auth } from 'aws-amplify';
 // API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5201/api';
 
+console.log('NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+console.log('Final API_URL:', API_URL);
+
 export interface Task {
   id: number;
   title: string;

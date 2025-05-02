@@ -1,13 +1,13 @@
 ﻿// src/app/tasks/page.tsx
 "use client";
-import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store';
-import { fetchTasks, deleteTask } from '@/store/taskSlice';
+import {useEffect, useState} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
+import {AppDispatch, RootState} from '@/store';
+import {deleteTask, fetchTasks} from '@/store/taskSlice';
 import Link from 'next/link';
 
 // Simple priority display component
-const PriorityBadge = ({ priority }: { priority?: number }) => {
+const PriorityBadge = ({priority}: { priority?: number }) => {
   const priorityValue = Number(priority);
 
   if (priorityValue === 2) {
@@ -21,7 +21,7 @@ const PriorityBadge = ({ priority }: { priority?: number }) => {
 
 export default function TasksPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { tasks, status, error } = useSelector((state: RootState) => state.tasks);
+  const {tasks, status, error} = useSelector((state: RootState) => state.tasks);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function TasksPage() {
             <div key={task.id} className="border p-4 rounded-lg hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-2">
                 <h3 className="text-lg font-semibold truncate">{task.title}</h3>
-                <PriorityBadge priority={task.priority} />
+                <PriorityBadge priority={task.priority}/>
               </div>
 
               <p className="text-gray-600 text-sm mb-3 line-clamp-2">
@@ -81,13 +81,13 @@ export default function TasksPage() {
                 <div className="flex space-x-2">
                   {/* View button */}
                   <Link
-                    href={`/tasks/${task.id}`}
+                    href={`/tasks/details?id=${task.id}`}
                     className="text-gray-500 hover:text-gray-700 text-sm"
                   >
                     View
                   </Link>
                   <Link
-                    href={`/tasks/${task.id}/edit`}
+                    href={`/tasks/edit?id=${task.id}`}
                     className="text-blue-500 hover:text-blue-700 text-sm"
                   >
                     Edit

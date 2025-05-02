@@ -10,7 +10,7 @@ namespace TaskManager.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Add authorization to all endpoints
+    [Authorize]
     public class TasksController : BaseApiController
     {
         private readonly ITaskRepository _taskRepository;
@@ -96,10 +96,35 @@ namespace TaskManager.API.Controllers
                 
                 var user = await _authService.GetUserByIdAsync(userId);
                 if (user == null)
-                {
-                    _logger.LogWarning("User not found in database: {UserId}", userId);
-                    return BadRequest("User not found. Please logout and login again.");
-                }
+                    // 如果用户不存在，尝试从令牌信息创建用户
+                    if (user == null)
+                    {
+                        _logger.LogWarning("User not found in database, attempting to create - UserId: {UserId}", userId);
+            
+                        // 从JWT令牌中获取信息
+                        try
+                        {
+                            var email = User.FindFirstValue(ClaimTypes.Email) ?? $"{userId}@example.com";
+                            var username = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue("name") ?? 
+                                User.FindFirstValue("cognito:username") ?? userId;
+                
+                            // 使用SyncLocalUser自动创建用户
+                            await _authService.SyncLocalUserAsync(userId, email, username);
+                
+                            // 再次尝试获取用户
+                            user = await _authService.GetUserByIdAsync(userId);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to create user from token data: {UserId}", userId);
+                        }
+            
+                        // 如果仍然没有用户，返回错误
+                        if (user == null)
+                        {
+                            return BadRequest("Failed to retrieve or create user. Please logout and login again.");
+                        }
+                    }
 
                 task.UserId = userId;
                 

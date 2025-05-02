@@ -1,49 +1,53 @@
 ﻿"use client";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {useDispatch, useSelector} from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { checkAuthStatus } from '@/store/authSlice';
 
 export default function TasksLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
-
   const dispatch = useDispatch();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  
+
+  // Determine if we're client-side
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Check authentication status
   useEffect(() => {
+    if (!isClient) return;
+
     const checkAuth = async () => {
       try {
         await dispatch(checkAuthStatus()).unwrap();
       } catch (err) {
         console.error("Auth check failed:", err);
       } finally {
-        setIsCheckingAuth(false);
+        setIsLoaded(true);
       }
     };
 
     checkAuth();
-  }, [dispatch]);
+  }, [dispatch, isClient]);
 
+  // Redirect if not authenticated
   useEffect(() => {
-    if (isClient && !isCheckingAuth && !isAuthenticated) {
+    if (isClient && isLoaded && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isClient, isCheckingAuth, isAuthenticated, router]);
+  }, [isClient, isLoaded, isAuthenticated, router]);
 
-  if (isCheckingAuth) {
+  if (!isClient || !isLoaded) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  if (!isClient || !isAuthenticated) {
-    return null;
+  if (!isAuthenticated) {
+    return <div className="flex items-center justify-center h-screen">Redirecting to login...</div>;
   }
 
   return (

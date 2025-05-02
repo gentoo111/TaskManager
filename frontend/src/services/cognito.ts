@@ -89,32 +89,82 @@ export const confirmSignUp = async (code: string) => {
 // Login
 export const signIn = async (usernameOrEmail: string, password: string, rememberMe: boolean = false) => {
   try {
-    // SetWindowFeature(WIND_FEATURE_REMEMBER_ME, 1)
-    const authOptions = rememberMe
-      ? {
-        clientMetadata: {
-          remember_me: 'true'
-        }
-      }
-      : undefined;
+    console.log("Starting login process...");
 
     const user = await Auth.signIn(usernameOrEmail, password);
-    const session = user.getSignInUserSession();
+    console.log("Sign-in API call successful, checking user status:", user.challengeName || "No challenge");
 
-    // If remember me is selected, store token in localStorage
-    if (rememberMe) {
-      localStorage.setItem('rememberedUser', usernameOrEmail);
-    } else {
-      localStorage.removeItem('rememberedUser');
+    // Handle NEW_PASSWORD_REQUIRED challenge automatically
+    if (user.challengeName === 'NEW_PASSWORD_REQUIRED') {
+      console.log("NEW_PASSWORD_REQUIRED challenge detected, auto-completing");
+
+      try {
+        // Complete the challenge using the same password
+        const loggedInUser = await Auth.completeNewPassword(user, password);
+        console.log("Challenge completed successfully");
+
+        const session = loggedInUser.getSignInUserSession();
+        const idToken = session.getIdToken();
+        const token = idToken.getJwtToken();
+
+        if (rememberMe) {
+          localStorage.setItem('rememberedUser', usernameOrEmail);
+        } else {
+          localStorage.removeItem('rememberedUser');
+        }
+
+        return {
+          successful: true,
+          token: token,
+          userId: loggedInUser.attributes?.sub,
+          username: loggedInUser.attributes?.name || usernameOrEmail,
+          message: "Login successful"
+        };
+      } catch (challengeError) {
+        console.error("Failed to auto-complete password challenge:", challengeError);
+        // If auto-handling fails, return error 
+        return {
+          successful: false,
+          message: challengeError.message || "Failed to complete authentication"
+        };
+      }
     }
 
-    return {
-      successful: true,
-      token: session.getIdToken().getJwtToken(),
-      userId: user.attributes.sub,
-      username: user.attributes.name || usernameOrEmail,
-      message: "Login successful"
-    };
+    // Normal authentication flow (no challenge)
+    const session = user.getSignInUserSession();
+    if (!session) {
+      console.error("No session available after sign in");
+      return {
+        successful: false,
+        message: "Authentication failed: No session available"
+      };
+    }
+
+    try {
+      const idToken = session.getIdToken();
+      const token = idToken.getJwtToken();
+      console.log("Token obtained successfully:", token.substring(0, 20) + "...");
+
+      if (rememberMe) {
+        localStorage.setItem('rememberedUser', usernameOrEmail);
+      } else {
+        localStorage.removeItem('rememberedUser');
+      }
+
+      return {
+        successful: true,
+        token: token,
+        userId: user.attributes?.sub,
+        username: user.attributes?.name || usernameOrEmail,
+        message: "Login successful"
+      };
+    } catch (tokenError) {
+      console.error("Error getting token:", tokenError);
+      return {
+        successful: false,
+        message: "Failed to obtain authentication token"
+      };
+    }
   } catch (error) {
     console.error('Error signing in:', error);
     return {
