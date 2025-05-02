@@ -97,3 +97,6 @@ TestResults/
 /backend/backup_migrations/20250423024340_InitialCreate.cs
 /backend/backup_migrations/
 /backend/TaskManager.Infrastructure/Migrations/
+
+appsettings.json
+README2.md
